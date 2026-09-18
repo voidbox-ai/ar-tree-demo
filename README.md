@@ -1,4 +1,4 @@
-# VOIDBOX WebAR 프로토타입 — 조경수목 정보 패널
+# voidbox WebAR 프로토타입 — 조경수목 정보 패널
 
 ## 구성
 - `index.html` : 단일 파일 (A-Frame 1.5 + MindAR 1.2.5, CDN 로딩)
