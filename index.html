@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>VOIDBOX AR · 조경수목 정보 프로토타입</title>
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0b1a12;font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;}
+  #ui{position:fixed;inset:0;pointer-events:none;z-index:10;display:flex;flex-direction:column;justify-content:space-between;}
+  .top{padding:calc(env(safe-area-inset-top) + 14px) 16px 0;display:flex;align-items:center;gap:10px;}
+  .brand{background:rgba(9,20,14,.72);backdrop-filter:blur(8px);color:#fff;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;letter-spacing:.02em;display:flex;align-items:center;gap:8px;}
+  .brand i{width:8px;height:8px;border-radius:50%;background:#37e08a;box-shadow:0 0 10px #37e08a;display:inline-block;}
+  .brand span{font-weight:400;opacity:.8}
+  .bottom{padding:0 16px calc(env(safe-area-inset-bottom) + 18px);display:flex;flex-direction:column;gap:10px;align-items:center;}
+  #hint{color:#fff;font-size:13px;background:rgba(9,20,14,.72);backdrop-filter:blur(8px);padding:10px 16px;border-radius:12px;text-align:center;line-height:1.5}
+  #tabs{display:none;gap:8px;pointer-events:auto;}
+  #tabs button{border:1px solid rgba(255,255,255,.25);background:rgba(9,20,14,.72);backdrop-filter:blur(8px);color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;}
+  #tabs button.on{background:#37e08a;color:#062;border-color:#37e08a}
+  #loading{position:fixed;inset:0;z-index:20;background:#0b1a12;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-size:14px}
+  #loading .logo{font-size:28px;font-weight:800;letter-spacing:.08em}
+  #loading .logo b{color:#37e08a}
+  .spin{width:28px;height:28px;border:3px solid rgba(255,255,255,.2);border-top-color:#37e08a;border-radius:50%;animation:r 1s linear infinite}
+  @keyframes r{to{transform:rotate(360deg)}}
+  .mindar-ui-overlay,.a-enter-vr,.a-enter-ar{display:none!important}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="logo">VOID<b>BOX</b></div><div class="spin"></div><div id="loadmsg">AR 엔진 로딩 중…</div></div>
+
+<div id="ui">
+  <div class="top"><div class="brand"><i></i>VOIDBOX AR <span>· 조경수목 정보 서비스</span></div></div>
+  <div class="bottom">
+    <div id="hint">명함(마커)을 카메라에 비춰주세요</div>
+    <div id="tabs">
+      <button data-tab="0" class="on">기본 정보</button>
+      <button data-tab="1">생육 데이터</button>
+      <button data-tab="2">관리 이력</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========= 데이터 (데모용) ========= */
+const TREE = {
+  name:'느티나무', sci:'Zelkova serrata', id:'YC-MD-07-0213',
+  site:'목동 7단지 · 중앙광장 남측', planted:'1988년 (수령 약 38년)',
+  height:'12.5 m', dbh:'45 cm', crown:'9.8 m', health:87, co2:'32 kg/년',
+  growth:{years:['2019','2020','2021','2022','2023','2024','2025'], dbh:[38,39,40.5,41.5,43,44,45], health:[78,80,79,83,85,86,87]},
+  history:[
+    ['2025.04','수세 진단','건강도 87 · 이상 없음','ok'],
+    ['2024.09','태풍 후 점검','가지 2개소 절단 정리','ok'],
+    ['2024.06','병해충 방제','흰불나방 예찰 · 친환경 약제','ok'],
+    ['2024.03','정기 전정','수형 정리 · 고사지 제거','ok'],
+    ['2023.11','토양 개량','유기질 비료 시비','ok'],
+  ]
+};
+const G = {bg:'#0e1f17', card:'#12281e', line:'rgba(255,255,255,.10)', txt:'#ffffff', sub:'rgba(255,255,255,.62)', acc:'#37e08a', acc2:'#7ad7ff', warn:'#ffb84d'};
+
+/* ========= 캔버스 패널 그리기 ========= */
+const W=1024, H=720;
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function frame(ctx,title,tag){
+  ctx.clearRect(0,0,W,H);
+  rr(ctx,0,0,W,H,36); ctx.fillStyle=G.bg; ctx.fill();
+  ctx.strokeStyle='rgba(55,224,138,.55)'; ctx.lineWidth=4; ctx.stroke();
+  // header
+  ctx.fillStyle=G.acc; rr(ctx,40,36,10,64,5); ctx.fill();
+  ctx.fillStyle=G.txt; ctx.font='800 56px sans-serif'; ctx.textBaseline='top'; ctx.fillText(TREE.name,70,34);
+  ctx.fillStyle=G.sub; ctx.font='italic 26px sans-serif'; ctx.fillText(TREE.sci,70,98);
+  // tag
+  ctx.font='700 24px sans-serif'; const tw=ctx.measureText(tag).width+44;
+  rr(ctx,W-40-tw,44,tw,48,24); ctx.fillStyle='rgba(55,224,138,.16)'; ctx.fill();
+  ctx.strokeStyle=G.acc; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle=G.acc; ctx.fillText(tag,W-40-tw+22,55);
+  ctx.fillStyle=G.sub; ctx.font='22px sans-serif'; ctx.textAlign='right'; ctx.fillText('ID '+TREE.id,W-40,104); ctx.textAlign='left';
+  ctx.strokeStyle=G.line; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(40,150); ctx.lineTo(W-40,150); ctx.stroke();
+  // section title
+  ctx.fillStyle=G.txt; ctx.font='700 30px sans-serif'; ctx.fillText(title,40,176);
+}
+function drawTreeIcon(ctx,cx,cy,s){
+  ctx.fillStyle='#8a5a2b'; rr(ctx,cx-s*.07,cy-s*.05,s*.14,s*.55,s*.04); ctx.fill();
+  const blobs=[[0,-.35,.34],[-.28,-.2,.26],[.28,-.2,.26],[-.16,-.5,.22],[.16,-.5,.22],[0,-.12,.28]];
+  blobs.forEach(([x,y,r],i)=>{ctx.fillStyle=i%2?'#2fbf72':'#37e08a';ctx.beginPath();ctx.arc(cx+x*s,cy+y*s,r*s,0,7);ctx.fill();});
+  ctx.fillStyle='rgba(255,255,255,.18)'; ctx.beginPath(); ctx.arc(cx-.1*s,cy-.55*s,.12*s,0,7); ctx.fill();
+}
+function panelInfo(ctx){
+  frame(ctx,'기본 정보','건강도 양호');
+  // photo card
+  rr(ctx,40,224,300,440,24); ctx.fillStyle=G.card; ctx.fill();
+  const grd=ctx.createLinearGradient(0,224,0,664); grd.addColorStop(0,'rgba(122,215,255,.12)'); grd.addColorStop(1,'rgba(55,224,138,.05)');
+  ctx.fillStyle=grd; ctx.fill();
+  drawTreeIcon(ctx,190,470,300);
+  ctx.fillStyle=G.sub; ctx.font='20px sans-serif'; ctx.textAlign='center'; ctx.fillText('현장 촬영 이미지 영역',190,630); ctx.textAlign='left';
+  // stats grid
+  const stats=[['수고',TREE.height],['흉고직경',TREE.dbh],['수관폭',TREE.crown],['식재년도',TREE.planted],['위치',TREE.site],['CO₂ 흡수량',TREE.co2]];
+  stats.forEach((s,i)=>{const col=i%2, row=Math.floor(i/2); const x=372+col*316, y=224+row*150;
+    rr(ctx,x,y,300,132,20); ctx.fillStyle=G.card; ctx.fill();
+    ctx.fillStyle=G.sub; ctx.font='22px sans-serif'; ctx.fillText(s[0],x+22,y+20);
+    ctx.fillStyle=(i==5)?G.acc:G.txt; ctx.font=(s[1].length>10?'700 26px':'700 40px')+' sans-serif'; ctx.fillText(s[1],x+22,y+58);
+  });
+}
+function panelGrowth(ctx){
+  frame(ctx,'생육 데이터 · 최근 7년','성장 추세 ↑');
+  const g=TREE.growth;
+  // bar chart DBH
+  const x0=90,y0=640,cw=520,ch=380;
+  ctx.fillStyle=G.sub; ctx.font='22px sans-serif'; ctx.fillText('흉고직경 (cm)',x0-40,222);
+  ctx.strokeStyle=G.line; ctx.lineWidth=2;
+  for(let i=0;i<=4;i++){const y=y0-ch*i/4; ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x0+cw,y);ctx.stroke(); ctx.fillStyle=G.sub;ctx.font='18px sans-serif';ctx.textAlign='right';ctx.fillText(String(30+5*i),x0-12,y-9);ctx.textAlign='left';}
+  const bw=cw/g.years.length;
+  g.years.forEach((yr,i)=>{const v=g.dbh[i]; const h=(v-30)/20*ch; const x=x0+i*bw+bw*.2;
+    const bg=ctx.createLinearGradient(0,y0-h,0,y0); bg.addColorStop(0,G.acc); bg.addColorStop(1,'rgba(55,224,138,.25)');
+    rr(ctx,x,y0-h,bw*.6,h,8); ctx.fillStyle=bg; ctx.fill();
+    ctx.fillStyle=G.txt; ctx.font='700 20px sans-serif'; ctx.textAlign='center'; ctx.fillText(v,x+bw*.3,y0-h-28);
+    ctx.fillStyle=G.sub; ctx.font='20px sans-serif'; ctx.fillText(yr,x+bw*.3,y0+14); ctx.textAlign='left';
+  });
+  // health line + gauge
+  const gx=660,gy=224; rr(ctx,gx,gy,324,440,24); ctx.fillStyle=G.card; ctx.fill();
+  ctx.fillStyle=G.sub; ctx.font='22px sans-serif'; ctx.fillText('건강도 지수',gx+24,gy+22);
+  const cx=gx+162, cy=gy+170, R=95;
+  ctx.lineWidth=18; ctx.lineCap='round';
+  ctx.strokeStyle='rgba(255,255,255,.1)'; ctx.beginPath(); ctx.arc(cx,cy,R,Math.PI*.75,Math.PI*2.25); ctx.stroke();
+  ctx.strokeStyle=G.acc; ctx.beginPath(); ctx.arc(cx,cy,R,Math.PI*.75,Math.PI*.75+Math.PI*1.5*TREE.health/100); ctx.stroke();
+  ctx.fillStyle=G.txt; ctx.font='800 64px sans-serif'; ctx.textAlign='center'; ctx.fillText(TREE.health,cx,cy-36);
+  ctx.fillStyle=G.sub; ctx.font='20px sans-serif'; ctx.fillText('/ 100',cx,cy+34); ctx.textAlign='left';
+  // sparkline
+  ctx.fillStyle=G.sub; ctx.font='20px sans-serif'; ctx.fillText('연도별 추이',gx+24,gy+320);
+  const sx=gx+24, sy=gy+420, sw=276, sh=60;
+  ctx.strokeStyle=G.acc2; ctx.lineWidth=4; ctx.beginPath();
+  g.health.forEach((v,i)=>{const x=sx+i*sw/(g.health.length-1), y=sy-(v-70)/20*sh; i?ctx.lineTo(x,y):ctx.moveTo(x,y);}); ctx.stroke();
+  g.health.forEach((v,i)=>{const x=sx+i*sw/(g.health.length-1), y=sy-(v-70)/20*sh; ctx.fillStyle=G.acc2; ctx.beginPath(); ctx.arc(x,y,6,0,7); ctx.fill();});
+}
+function panelHistory(ctx){
+  frame(ctx,'관리 이력','최근 점검 2025.04');
+  const x=70, top=232;
+  ctx.strokeStyle=G.line; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(x+14,top); ctx.lineTo(x+14,top+TREE.history.length*84); ctx.stroke();
+  TREE.history.forEach((h,i)=>{const y=top+i*84;
+    ctx.fillStyle=i?G.card:'rgba(55,224,138,.2)'; rr(ctx,x+50,y-10,860,68,16); ctx.fill();
+    ctx.fillStyle=i?G.acc2:G.acc; ctx.beginPath(); ctx.arc(x+14,y+24,i?9:13,0,7); ctx.fill();
+    ctx.fillStyle=G.sub; ctx.font='700 22px sans-serif'; ctx.fillText(h[0],x+74,y+12);
+    ctx.fillStyle=G.txt; ctx.font='700 26px sans-serif'; ctx.fillText(h[1],x+200,y+10);
+    ctx.fillStyle=G.sub; ctx.font='22px sans-serif'; ctx.fillText(h[2],x+420,y+12);
+    ctx.fillStyle=G.acc; ctx.font='700 20px sans-serif'; ctx.textAlign='right'; ctx.fillText('완료 ✓',x+890,y+14); ctx.textAlign='left';
+  });
+  ctx.fillStyle=G.sub; ctx.font='22px sans-serif'; ctx.fillText('다음 예정 · 2026.03 정기 전정  ·  담당 : 양천구 공원녹지과 / 관리사무소',70,672);
+}
+const PANELS=[panelInfo,panelGrowth,panelHistory];
+
+/* ========= A-Frame 컴포넌트: 캔버스 텍스처 패널 ========= */
+AFRAME.registerComponent('info-panel',{
+  schema:{tab:{default:0}},
+  init(){
+    this.canvas=document.createElement('canvas'); this.canvas.width=W; this.canvas.height=H;
+    this.ctx=this.canvas.getContext('2d');
+    this.tex=new THREE.CanvasTexture(this.canvas); this.tex.colorSpace=THREE.SRGBColorSpace; this.tex.anisotropy=8;
+    const apply=()=>{const m=this.el.getObject3D('mesh'); if(!m)return; m.material=new THREE.MeshBasicMaterial({map:this.tex,transparent:true}); this.redraw();};
+    this.el.addEventListener('object3dset',apply); apply();
+  },
+  update(){this.redraw();},
+  redraw(){ if(!this.ctx)return; PANELS[this.data.tab](this.ctx); this.tex.needsUpdate=true; }
+});
+
+/* ========= 씬 구성 ========= */
+const PREVIEW=new URLSearchParams(location.search).has('preview');
+const MARKER='./assets/card.mind';   // ← 회사 로고 .mind 파일로 교체
+
+const content=`
+  <a-entity id="content" position="0 0 0">
+    <!-- 3D 수목 -->
+    <a-entity position="-0.62 -0.05 0.02" animation="property: rotation; to: 0 360 0; dur: 14000; loop: true; easing: linear">
+      <a-cylinder position="0 0.16 0" radius="0.03" height="0.32" color="#8a5a2b" shader="flat"></a-cylinder>
+      <a-sphere position="0 0.42 0" radius="0.17" color="#2fbf72" shader="flat"></a-sphere>
+      <a-sphere position="-0.12 0.36 0.05" radius="0.12" color="#37e08a" shader="flat"></a-sphere>
+      <a-sphere position="0.12 0.37 -0.04" radius="0.12" color="#37e08a" shader="flat"></a-sphere>
+      <a-sphere position="0 0.56 0" radius="0.11" color="#5cf0a8" shader="flat"></a-sphere>
+      <a-ring position="0 0.005 0" rotation="-90 0 0" radius-inner="0.22" radius-outer="0.25" color="#37e08a" material="shader:flat;opacity:0.7;transparent:true" animation="property: scale; from: 0.8 0.8 0.8; to: 1.15 1.15 1.15; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine"></a-ring>
+    </a-entity>
+    <!-- 연결선 -->
+    <a-entity line="start: -0.62 0.62 0.02; end: -0.62 0.95 0.02; color:#37e08a"></a-entity>
+    <a-entity line="start: -0.62 0.95 0.02; end: -0.25 0.95 0.02; color:#37e08a"></a-entity>
+    <!-- 정보 패널 -->
+    <a-plane id="panel" info-panel="tab:0" position="0.42 0.62 0.02" width="1.3" height="0.914" rotation="0 -12 0" material="transparent:true"
+      animation__in="property: scale; from: 0.6 0.6 0.6; to: 1 1 1; dur: 500; easing: easeOutBack; startEvents: show">
+    </a-plane>
+    <!-- 바닥 그리드 -->
+    <a-plane position="0 0 0" rotation="-90 0 0" width="1.6" height="1.6" material="shader:flat;color:#37e08a;opacity:0.10;transparent:true;wireframe:true;segmentsWidth:1;segmentsHeight:1"></a-plane>
+  </a-entity>`;
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const scene=document.createElement('a-scene');
+  if(PREVIEW){
+    scene.setAttribute('background','color:#1c2b24');
+    scene.setAttribute('vr-mode-ui','enabled:false');
+    scene.innerHTML=`<a-entity camera position="0 0.5 2.6" look-controls="enabled:false"></a-entity>
+      <a-entity rotation="-20 0 0" position="-0.15 -0.2 0" scale="0.9 0.9 0.9">${content}</a-entity>`;
+  }else{
+    scene.setAttribute('mindar-image',`imageTargetSrc: ${MARKER}; autoStart: true; uiLoading: no; uiScanning: no; uiError: no; filterMinCF: 0.0001; filterBeta: 0.01; maxTrack: 1`);
+    scene.setAttribute('color-space','sRGB');
+    scene.setAttribute('renderer','colorManagement: true; physicallyCorrectLights: true');
+    scene.setAttribute('vr-mode-ui','enabled:false');
+    scene.setAttribute('device-orientation-permission-ui','enabled:false');
+    scene.innerHTML=`<a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
+      <a-entity id="target" mindar-image-target="targetIndex: 0"><a-entity scale="0.85 0.85 0.85">${content}</a-entity></a-entity>`;
+  }
+  document.body.appendChild(scene);
+
+  const load=document.getElementById('loading'), hint=document.getElementById('hint'), tabs=document.getElementById('tabs');
+  const setTab=n=>{document.getElementById('panel').setAttribute('info-panel','tab',n); tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.tab==n));};
+  tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setTab(+b.dataset.tab)));
+
+  if(PREVIEW){
+    scene.addEventListener('loaded',()=>{load.style.display='none'; hint.textContent='데스크톱 프리뷰 모드 (카메라 미사용)'; tabs.style.display='flex';});
+    return;
+  }
+  scene.addEventListener('arReady',()=>{load.style.display='none';});
+  scene.addEventListener('arError',()=>{document.getElementById('loadmsg').textContent='카메라를 열 수 없습니다. HTTPS 접속 및 카메라 권한을 확인해주세요.';});
+  const target=scene.querySelector('#target');
+  target.addEventListener('targetFound',()=>{hint.textContent='수목 정보를 불러왔습니다 · 탭을 눌러 전환'; tabs.style.display='flex'; document.getElementById('panel').emit('show');});
+  target.addEventListener('targetLost',()=>{hint.textContent='명함(마커)을 카메라에 비춰주세요';});
+});
+</script>
+</body>
+</html>
