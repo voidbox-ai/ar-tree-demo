@@ -5,9 +5,13 @@
 - `assets/card.mind` : **임시 마커** (MindAR 공식 샘플). 회사 로고로 만든 .mind로 교체
 - `assets/card.png` : 임시 마커 인쇄용 이미지 (테스트 시 화면에 띄우거나 출력)
 
-## 배포 (HTTPS 필수 — 카메라 권한)
-GitHub Pages: 리포 루트에 그대로 업로드 → Settings > Pages > main / root  
-Vercel: 폴더 드래그 앤 드롭 (빌드 설정 없음)
+## 배포 — GitHub Pages + 커스텀 도메인
+- 리포: github.com/voidbox-ai/<리포> (branch `main`, root)
+- Settings > Pages > Source: Deploy from a branch (main / root)
+- 커스텀 도메인: `ar-demo.voidbox.ai` (리포 루트의 `CNAME` 파일이 자동 반영됨)
+- 가비아 DNS: `ar-demo` CNAME → `voidbox-ai.github.io.`
+- 인증서 발급(수 분~1시간) 후 Settings > Pages > "Enforce HTTPS" 체크
+- 시연 URL: https://ar-demo.voidbox.ai  ·  데스크톱 프리뷰: https://ar-demo.voidbox.ai/?preview=1
 
 ## 마커 교체
 1. https://hiukim.github.io/mind-ar-js-doc/tools/compile 에서 로고 이미지 업로드 → `targets.mind` 다운로드
