@@ -24,14 +24,58 @@
   .spin{width:28px;height:28px;border:3px solid rgba(255,255,255,.2);border-top-color:#37e08a;border-radius:50%;animation:r 1s linear infinite}
   @keyframes r{to{transform:rotate(360deg)}}
   .mindar-ui-overlay,.a-enter-vr,.a-enter-ar{display:none!important}
+  /* 랜딩 */
+  #landing{position:fixed;inset:0;z-index:30;background:radial-gradient(120% 80% at 50% 0%,#17382a 0%,#0b1a12 60%);color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 28px) 28px calc(env(safe-area-inset-bottom) + 28px);}
+  #landing .logo{font-size:22px;font-weight:800;letter-spacing:.1em}
+  #landing .logo b{color:#37e08a}
+  #landing .hero h1{font-size:34px;line-height:1.25;margin:0 0 14px;font-weight:800;letter-spacing:-.01em}
+  #landing .hero h1 span{color:#37e08a}
+  #landing .hero p{margin:0;color:rgba(255,255,255,.7);font-size:15px;line-height:1.65}
+  .steps{display:flex;gap:10px;margin-top:28px}
+  .steps div{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 12px 14px;font-size:12px;line-height:1.5;color:rgba(255,255,255,.8)}
+  .steps b{display:block;color:#37e08a;font-size:18px;margin-bottom:4px}
+  #cta{width:100%;border:0;border-radius:16px;padding:18px;font-size:17px;font-weight:800;background:#37e08a;color:#062;box-shadow:0 8px 30px rgba(55,224,138,.35);display:flex;align-items:center;justify-content:center;gap:10px}
+  #cta:active{transform:scale(.98)}
+  #cta:disabled{opacity:.6}
+  #consent{font-size:12px;color:rgba(255,255,255,.5);text-align:center;margin-top:12px;line-height:1.5}
+  #consent.err{color:#ffb84d}
+  /* 스캔 뷰파인더 */
+  #finder{position:fixed;left:50%;top:50%;width:min(72vw,320px);aspect-ratio:1/1;transform:translate(-50%,-56%);pointer-events:none;z-index:5;display:none}
+  #finder i{position:absolute;width:34px;height:34px;border:3px solid #37e08a;border-radius:6px}
+  #finder i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}
+  #finder i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+  #finder i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}
+  #finder i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+  #finder .line{position:absolute;left:8%;right:8%;height:2px;background:linear-gradient(90deg,transparent,#37e08a,transparent);animation:scan 2.2s ease-in-out infinite}
+  @keyframes scan{0%{top:6%}50%{top:94%}100%{top:6%}}
+  #back{pointer-events:auto;background:rgba(9,20,14,.72);backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:999px;width:36px;height:36px;font-size:18px;display:none;align-items:center;justify-content:center;margin-left:auto}
 </style>
 </head>
 <body>
 
-<div id="loading"><div class="logo">VOID<b>BOX</b></div><div class="spin"></div><div id="loadmsg">AR 엔진 로딩 중…</div></div>
+<div id="loading" style="display:none"><div class="logo">VOID<b>BOX</b></div><div class="spin"></div><div id="loadmsg">AR 엔진 로딩 중…</div></div>
+
+<div id="landing">
+  <div class="logo">VOID<b>BOX</b> AR</div>
+  <div class="hero">
+    <h1>수목 정보를<br><span>AR</span>로 확인하세요</h1>
+    <p>단지 내 조경수목에 부착된 태그를 스캔하면 수종·생육 데이터·관리 이력을 현장에서 바로 볼 수 있습니다.</p>
+    <div class="steps">
+      <div><b>1</b>카메라 사용 허용</div>
+      <div><b>2</b>수목 태그 비추기</div>
+      <div><b>3</b>정보 패널 확인</div>
+    </div>
+  </div>
+  <div>
+    <button id="cta"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M7 12h10"/></svg>태그 스캔하기</button>
+    <div id="consent">스캔을 시작하면 카메라 사용 권한을 요청합니다.<br>영상은 기기에서만 처리되며 저장·전송되지 않습니다.</div>
+  </div>
+</div>
+
+<div id="finder"><i></i><i></i><i></i><i></i><div class="line"></div></div>
 
 <div id="ui">
-  <div class="top"><div class="brand"><i></i>VOIDBOX AR <span>· 조경수목 정보 서비스</span></div></div>
+  <div class="top"><div class="brand"><i></i>VOIDBOX AR <span>· 조경수목 정보 서비스</span></div><button id="back" title="처음으로">×</button></div>
   <div class="bottom">
     <div id="hint">명함(마커)을 카메라에 비춰주세요</div>
     <div id="tabs">
@@ -197,7 +241,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     scene.innerHTML=`<a-entity camera position="0 0.5 2.6" look-controls="enabled:false"></a-entity>
       <a-entity rotation="-20 0 0" position="-0.15 -0.2 0" scale="0.9 0.9 0.9">${content}</a-entity>`;
   }else{
-    scene.setAttribute('mindar-image',`imageTargetSrc: ${MARKER}; autoStart: true; uiLoading: no; uiScanning: no; uiError: no; filterMinCF: 0.0001; filterBeta: 0.01; maxTrack: 1`);
+    scene.setAttribute('mindar-image',`imageTargetSrc: ${MARKER}; autoStart: false; uiLoading: no; uiScanning: no; uiError: no; filterMinCF: 0.0001; filterBeta: 0.01; maxTrack: 1`);
     scene.setAttribute('color-space','sRGB');
     scene.setAttribute('renderer','colorManagement: true; physicallyCorrectLights: true');
     scene.setAttribute('vr-mode-ui','enabled:false');
@@ -211,15 +255,46 @@ document.addEventListener('DOMContentLoaded',()=>{
   const setTab=n=>{document.getElementById('panel').setAttribute('info-panel','tab',n); tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.tab==n));};
   tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setTab(+b.dataset.tab)));
 
+  const landing=document.getElementById('landing'), finder=document.getElementById('finder'), cta=document.getElementById('cta'), consent=document.getElementById('consent'), back=document.getElementById('back');
+
   if(PREVIEW){
-    scene.addEventListener('loaded',()=>{load.style.display='none'; hint.textContent='데스크톱 프리뷰 모드 (카메라 미사용)'; tabs.style.display='flex';});
+    landing.style.display='none';
+    scene.addEventListener('loaded',()=>{hint.textContent='데스크톱 프리뷰 모드 (카메라 미사용)'; tabs.style.display='flex';});
     return;
   }
-  scene.addEventListener('arReady',()=>{load.style.display='none';});
+
+  /* ---- 화면 1: 랜딩 → 카메라 동의 → 화면 2: 스캔 ---- */
+  let sceneLoaded=false; scene.addEventListener('loaded',()=>sceneLoaded=true);
+  const waitLoaded=()=>sceneLoaded?Promise.resolve():new Promise(r=>scene.addEventListener('loaded',r,{once:true}));
+
+  cta.addEventListener('click',async()=>{
+    cta.disabled=true; consent.classList.remove('err'); consent.textContent='카메라 권한을 확인하는 중…';
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+      consent.classList.add('err'); consent.textContent='이 브라우저에서는 카메라를 사용할 수 없습니다. Safari 또는 Chrome으로 열어주세요.'; cta.disabled=false; return;
+    }
+    try{
+      // 사용자 제스처 직후 권한 요청 → 브라우저 동의 팝업
+      const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+      st.getTracks().forEach(t=>t.stop());
+    }catch(e){
+      consent.classList.add('err');
+      consent.textContent=(e&&e.name==='NotAllowedError')?'카메라 권한이 거부되었습니다. 브라우저 설정에서 카메라를 허용한 뒤 다시 시도해주세요.':'카메라를 열 수 없습니다 ('+(e&&e.name||'오류')+'). HTTPS 접속인지 확인해주세요.';
+      cta.disabled=false; return;
+    }
+    landing.style.display='none'; load.style.display='flex'; document.getElementById('loadmsg').textContent='AR 카메라를 준비하는 중…';
+    await waitLoaded();
+    try{ await scene.systems['mindar-image-system'].start(); }
+    catch(e){ document.getElementById('loadmsg').textContent='AR 엔진을 시작하지 못했습니다. 새로고침 후 다시 시도해주세요.'; }
+  });
+
+  scene.addEventListener('arReady',()=>{load.style.display='none'; finder.style.display='block'; back.style.display='flex'; hint.textContent='수목 태그를 사각형 안에 맞춰주세요';});
   scene.addEventListener('arError',()=>{document.getElementById('loadmsg').textContent='카메라를 열 수 없습니다. HTTPS 접속 및 카메라 권한을 확인해주세요.';});
+
   const target=scene.querySelector('#target');
-  target.addEventListener('targetFound',()=>{hint.textContent='수목 정보를 불러왔습니다 · 탭을 눌러 전환'; tabs.style.display='flex'; document.getElementById('panel').emit('show');});
-  target.addEventListener('targetLost',()=>{hint.textContent='명함(마커)을 카메라에 비춰주세요';});
+  target.addEventListener('targetFound',()=>{finder.style.display='none'; hint.textContent='수목 정보를 불러왔습니다 · 탭을 눌러 전환'; tabs.style.display='flex'; document.getElementById('panel').emit('show');});
+  target.addEventListener('targetLost',()=>{finder.style.display='block'; hint.textContent='태그를 다시 비춰주세요 · 패널은 유지됩니다';});
+
+  back.addEventListener('click',()=>{ try{scene.systems['mindar-image-system'].stop();}catch(e){} location.reload(); });
 });
 </script>
 </body>
