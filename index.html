@@ -3,12 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>VOIDBOX AR · 조경수목 정보 프로토타입</title>
+<title>voidbox AR · 조경수목 정보 프로토타입</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 <style>
-  html,body{margin:0;height:100%;overflow:hidden;background:#060807;font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;}
+  /* 주의: body에는 배경을 주지 않는다. MindAR가 카메라 <video>를 body 안에 z-index:-2로 넣기 때문에
+     body 배경이 있으면 카메라 영상이 가려진다. 배경은 html에만. */
+  html{background:#060807}
+  body{margin:0;height:100%;overflow:hidden;background:transparent;font-family:"Pretendard Variable",Pretendard,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;}
   #ui{position:fixed;inset:0;pointer-events:none;z-index:10;display:flex;flex-direction:column;justify-content:space-between;}
   .top{padding:calc(env(safe-area-inset-top) + 14px) 16px 0;display:flex;align-items:center;gap:10px;}
   .brand{background:rgba(8,10,9,.78);backdrop-filter:blur(8px);color:#fff;border-radius:999px;padding:8px 14px 8px 12px;font-size:12px;display:flex;align-items:center;gap:10px;}
@@ -53,10 +56,10 @@
 </head>
 <body>
 
-<div id="loading" style="display:none"><div class="logo"><img src="./assets/full_logo.svg" alt="VOIDBOX"></div><div class="spin"></div><div id="loadmsg">AR 엔진 로딩 중…</div></div>
+<div id="loading" style="display:none"><div class="logo"><img src="./assets/full_logo.svg" alt="voidbox"></div><div class="spin"></div><div id="loadmsg">AR 엔진 로딩 중…</div></div>
 
 <div id="landing">
-  <div class="logo"><img src="./assets/full_logo.svg" alt="VOIDBOX"></div>
+  <div class="logo"><img src="./assets/full_logo.svg" alt="voidbox"></div>
   <div class="hero">
     <h1>수목 정보를<br><span>AR</span>로 확인하세요</h1>
     <p>단지 내 조경수목에 부착된 태그를 스캔하면 수종·생육 데이터·관리 이력을 현장에서 바로 볼 수 있습니다.</p>
@@ -75,7 +78,7 @@
 <div id="finder"><i></i><i></i><i></i><i></i><div class="line"></div></div>
 
 <div id="ui">
-  <div class="top"><div class="brand"><img src="./assets/full_logo.svg" alt="VOIDBOX"><span>조경수목 AR</span><i></i></div><button id="back" title="처음으로">×</button></div>
+  <div class="top"><div class="brand"><img src="./assets/full_logo.svg" alt="voidbox"><span>조경수목 AR</span><i></i></div><button id="back" title="처음으로">×</button></div>
   <div class="bottom">
     <div id="hint">명함(마커)을 카메라에 비춰주세요</div>
     <div id="tabs">
@@ -88,26 +91,38 @@
 
 <script>
 /* ========= 데이터 (데모용) ========= */
-const TREE = {
-  name:'느티나무', sci:'Zelkova serrata', id:'YC-MD-07-0213',
-  site:'목동 7단지 · 중앙광장 남측', planted:'1988년 (수령 약 38년)',
-  height:'12.5 m', dbh:'45 cm', crown:'9.8 m', health:87, co2:'32 kg/년',
-  growth:{years:['2019','2020','2021','2022','2023','2024','2025'], dbh:[38,39,40.5,41.5,43,44,45], health:[78,80,79,83,85,86,87]},
-  history:[
-    ['2025.04','수세 진단','건강도 87 · 이상 없음','ok'],
-    ['2024.09','태풍 후 점검','가지 2개소 절단 정리','ok'],
-    ['2024.06','병해충 방제','흰불나방 예찰 · 친환경 약제','ok'],
-    ['2024.03','정기 전정','수형 정리 · 고사지 제거','ok'],
-    ['2023.11','토양 개량','유기질 비료 시비','ok'],
-  ]
-};
+const TREES = [
+ { kind:'cherry', name:'벚나무', sci:'Prunus × yedoensis', id:'YC-MD-07-0102',
+   site:'목동 7단지 · 진입로 가로변', planted:'1996년 (수령 약 30년)',
+   height:'9.5 m', dbh:'32 cm', crown:'8.2 m', health:82, co2:'21 kg/년',
+   growth:{years:['2019','2020','2021','2022','2023','2024','2025'], dbh:[26,27,28,29,30,31,32], health:[74,76,75,79,80,81,82]},
+   history:[
+     ['2025.04','개화 후 점검','낙화 정리 · 이상 없음','ok'],
+     ['2024.11','병해충 방제','천공충 예찰 · 수간 주사','ok'],
+     ['2024.07','태풍 후 점검','도복 위험 없음 · 지주목 보강','ok'],
+     ['2024.02','정기 전정','고사지 제거 · 절단면 도포','ok'],
+     ['2023.10','토양 개량','객토 · 유기질 비료 시비','ok'],
+   ]},
+ { kind:'pine', name:'소나무', sci:'Pinus densiflora', id:'YC-MD-07-0215',
+   site:'목동 7단지 · 중앙광장 동측', planted:'1988년 (수령 약 38년)',
+   height:'11.0 m', dbh:'38 cm', crown:'7.5 m', health:88, co2:'27 kg/년',
+   growth:{years:['2019','2020','2021','2022','2023','2024','2025'], dbh:[33,34,34.5,35.5,36.5,37,38], health:[81,83,82,85,86,87,88]},
+   history:[
+     ['2025.03','수세 진단','건강도 88 · 이상 없음','ok'],
+     ['2024.10','재선충 예방','예방 나무주사 완료','ok'],
+     ['2024.06','병해충 방제','솔잎혹파리 방제 · 친환경 약제','ok'],
+     ['2024.01','정기 전정','순 자르기 · 수형 정리','ok'],
+     ['2023.11','토양 개량','멀칭 · 유기질 비료 시비','ok'],
+   ]},
+];
+let TREE = TREES[0];
 const G = {bg:'#0b0d0c', card:'#151817', line:'rgba(255,255,255,.09)', txt:'#ffffff', sub:'rgba(255,255,255,.62)', acc:'#37e08a', acc2:'#7ad7ff', warn:'#ffb84d'};
 
 /* ========= 캔버스 패널 그리기 ========= */
 const FONT='"Pretendard Variable",Pretendard,sans-serif';
 const LOGO=new Image(); LOGO.src='./assets/full_logo.svg';
 // 캔버스는 DOM 텍스트가 아니라 동적 서브셋이 자동 로드되지 않으므로, 패널에 쓰이는 글자를 미리 로드
-const FONT_TEXT=JSON.stringify(TREE)+'기본 정보 건강도 양호 현장 촬영 이미지 영역 수고 흉고직경 수관폭 식재년도 위치 CO₂ 흡수량 생육 데이터 최근 7년 성장 추세 ↑ (cm) 지수 / 100 연도별 추이 관리 이력 최근 점검 완료 ✓ 다음 예정 정기 전정 담당 : 양천구 공원녹지과 ID 0123456789.';
+const FONT_TEXT=JSON.stringify(TREES)+'기본 정보 건강도 양호 현장 촬영 이미지 영역 수고 흉고직경 수관폭 식재년도 위치 CO₂ 흡수량 생육 데이터 최근 7년 성장 추세 ↑ (cm) 지수 / 100 연도별 추이 관리 이력 최근 점검 완료 ✓ 다음 예정 정기 전정 담당 : 양천구 공원녹지과 ID 0123456789.';
 const FONT_READY=Promise.all(['400','500','700','800'].map(w=>document.fonts.load(w+' 20px "Pretendard Variable"',FONT_TEXT))).catch(()=>{});
 const W=1024, H=720;
 function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
@@ -132,10 +147,23 @@ function frame(ctx,title,tag){
   ctx.fillStyle=G.txt; ctx.font='700 30px '+FONT; ctx.fillText(title,40,176);
 }
 function drawTreeIcon(ctx,cx,cy,s){
+  if(TREE.kind==='pine'){
+    ctx.strokeStyle='#b5653a'; ctx.lineWidth=s*.09; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(cx,cy+s*.5); ctx.quadraticCurveTo(cx-s*.06,cy+s*.1,cx+s*.02,cy-s*.3); ctx.stroke();
+    const layers=[[0,-.5,.46,.3,'#1f7a4a'],[-.16,-.32,.42,.26,'#2a9a5e'],[.18,-.28,.4,.25,'#237f4f'],[0,-.1,.56,.32,'#2fbf72'],[-.22,.02,.36,.22,'#2a9a5e'],[.24,.05,.38,.23,'#1f7a4a']];
+    layers.forEach(([x,y,w,h,c])=>{const X=cx+x*s,Y=cy+y*s,Wd=w*s,Ht=h*s; ctx.fillStyle=c; ctx.beginPath(); ctx.moveTo(X-Wd/2,Y+Ht/2); ctx.quadraticCurveTo(X-Wd/4,Y-Ht/2,X,Y-Ht/2); ctx.quadraticCurveTo(X+Wd/4,Y-Ht/2,X+Wd/2,Y+Ht/2); ctx.quadraticCurveTo(X,Y+Ht/2+Ht*.2,X-Wd/2,Y+Ht/2); ctx.fill();});
+    return;
+  }
+  if(TREE.kind==='cherry'){
+    ctx.strokeStyle='#8a5a2b'; ctx.lineWidth=s*.1; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(cx,cy+s*.5); ctx.bezierCurveTo(cx-s*.05,cy+s*.2,cx-s*.15,cy,cx-s*.08,cy-s*.2); ctx.stroke();
+    ctx.lineWidth=s*.05; ctx.beginPath(); ctx.moveTo(cx-s*.08,cy-s*.05); ctx.quadraticCurveTo(cx+s*.1,cy-s*.15,cx+s*.25,cy-s*.12); ctx.stroke();
+    const bl=[[0,-.32,.34,'#ffb7d5'],[-.3,-.18,.26,'#ff9ec9'],[.3,-.2,.27,'#ffc4de'],[-.14,-.5,.22,'#ffd2e6'],[.16,-.5,.23,'#ff9ec9'],[.02,-.08,.2,'#ffb7d5']];
+    bl.forEach(([x,y,r,c])=>{ctx.fillStyle=c;ctx.beginPath();ctx.arc(cx+x*s,cy+y*s,r*s,0,7);ctx.fill();});
+    for(let i=0;i<28;i++){const a=i*2.4,rr_=s*(.08+((i*37)%100)/100*.32);ctx.fillStyle='#ff5fa2';ctx.beginPath();ctx.arc(cx+Math.cos(a)*rr_,cy-s*.28+Math.sin(a)*rr_*.7,s*.018+(i%3)*s*.008,0,7);ctx.fill();}
+    return;
+  }
   ctx.fillStyle='#8a5a2b'; rr(ctx,cx-s*.07,cy-s*.05,s*.14,s*.55,s*.04); ctx.fill();
   const blobs=[[0,-.35,.34],[-.28,-.2,.26],[.28,-.2,.26],[-.16,-.5,.22],[.16,-.5,.22],[0,-.12,.28]];
   blobs.forEach(([x,y,r],i)=>{ctx.fillStyle=i%2?'#2fbf72':'#37e08a';ctx.beginPath();ctx.arc(cx+x*s,cy+y*s,r*s,0,7);ctx.fill();});
-  ctx.fillStyle='rgba(255,255,255,.18)'; ctx.beginPath(); ctx.arc(cx-.1*s,cy-.55*s,.12*s,0,7); ctx.fill();
 }
 function panelInfo(ctx){
   frame(ctx,'기본 정보','건강도 양호');
@@ -160,9 +188,10 @@ function panelGrowth(ctx){
   const x0=90,y0=640,cw=520,ch=380;
   ctx.fillStyle=G.sub; ctx.font='22px '+FONT; ctx.fillText('흉고직경 (cm)',x0-40,222);
   ctx.strokeStyle=G.line; ctx.lineWidth=2;
-  for(let i=0;i<=4;i++){const y=y0-ch*i/4; ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x0+cw,y);ctx.stroke(); ctx.fillStyle=G.sub;ctx.font='18px '+FONT;ctx.textAlign='right';ctx.fillText(String(30+5*i),x0-12,y-9);ctx.textAlign='left';}
+  const amin=Math.floor(Math.min(...g.dbh))-4, arng=Math.ceil((Math.max(...g.dbh)-amin)/4)*4;
+  for(let i=0;i<=4;i++){const y=y0-ch*i/4; ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x0+cw,y);ctx.stroke(); ctx.fillStyle=G.sub;ctx.font='18px '+FONT;ctx.textAlign='right';ctx.fillText(String(amin+arng*i/4),x0-12,y-9);ctx.textAlign='left';}
   const bw=cw/g.years.length;
-  g.years.forEach((yr,i)=>{const v=g.dbh[i]; const h=(v-30)/20*ch; const x=x0+i*bw+bw*.2;
+  g.years.forEach((yr,i)=>{const v=g.dbh[i]; const h=(v-amin)/arng*ch; const x=x0+i*bw+bw*.2;
     const bg=ctx.createLinearGradient(0,y0-h,0,y0); bg.addColorStop(0,G.acc); bg.addColorStop(1,'rgba(55,224,138,.25)');
     rr(ctx,x,y0-h,bw*.6,h,8); ctx.fillStyle=bg; ctx.fill();
     ctx.fillStyle=G.txt; ctx.font='700 20px '+FONT; ctx.textAlign='center'; ctx.fillText(v,x+bw*.3,y0-h-28);
@@ -202,7 +231,7 @@ const PANELS=[panelInfo,panelGrowth,panelHistory];
 
 /* ========= A-Frame 컴포넌트: 캔버스 텍스처 패널 ========= */
 AFRAME.registerComponent('info-panel',{
-  schema:{tab:{default:0}},
+  schema:{tab:{default:0},tree:{default:0}},
   init(){
     this.canvas=document.createElement('canvas'); this.canvas.width=W; this.canvas.height=H;
     this.ctx=this.canvas.getContext('2d');
@@ -213,34 +242,38 @@ AFRAME.registerComponent('info-panel',{
     FONT_READY.then(()=>this.redraw());
   },
   update(){this.redraw();},
-  redraw(){ if(!this.ctx)return; PANELS[this.data.tab](this.ctx); this.tex.needsUpdate=true; }
+  redraw(){ if(!this.ctx)return; TREE=TREES[this.data.tree]||TREES[0]; PANELS[this.data.tab](this.ctx); this.tex.needsUpdate=true; }
 });
 
 /* ========= 씬 구성 ========= */
-const PREVIEW=new URLSearchParams(location.search).has('preview');
-const MARKER='./assets/card.mind';   // ← 회사 로고 .mind 파일로 교체
+const QS=new URLSearchParams(location.search); const PREVIEW=QS.has('preview'); const PREVIEW_TREE=Math.min(TREES.length-1,parseInt(QS.get('tree')||'0')||0);
+const MARKER='./assets/targets.mind';  // 04_마커/tag_cherry.png(0), tag_pine.png(1) 컴파일본
 
-const content=`
-  <a-entity id="content" position="0 0 0">
+const content=(i)=>{ const t=TREES[i]; const crown=t.kind==='cherry'?['#ffb7d5','#ff9ec9','#ffc4de','#ffd2e6']:t.kind==='pine'?['#1f7a4a','#2a9a5e','#237f4f','#2fbf72']:['#2fbf72','#37e08a','#37e08a','#5cf0a8']; const trunk=t.kind==='pine'?'#b5653a':'#8a5a2b'; return `
+  <a-entity class="content" position="0 0 0">
     <!-- 3D 수목 -->
     <a-entity position="-0.62 -0.05 0.02" animation="property: rotation; to: 0 360 0; dur: 14000; loop: true; easing: linear">
-      <a-cylinder position="0 0.16 0" radius="0.03" height="0.32" color="#8a5a2b" shader="flat"></a-cylinder>
-      <a-sphere position="0 0.42 0" radius="0.17" color="#2fbf72" shader="flat"></a-sphere>
-      <a-sphere position="-0.12 0.36 0.05" radius="0.12" color="#37e08a" shader="flat"></a-sphere>
-      <a-sphere position="0.12 0.37 -0.04" radius="0.12" color="#37e08a" shader="flat"></a-sphere>
-      <a-sphere position="0 0.56 0" radius="0.11" color="#5cf0a8" shader="flat"></a-sphere>
+      <a-cylinder position="0 0.16 0" radius="0.03" height="0.32" color="${trunk}" shader="flat"></a-cylinder>
+${t.kind==='pine'?`
+      <a-cone position="0 0.30 0" radius-bottom="0.2" radius-top="0.02" height="0.24" color="${crown[0]}" shader="flat"></a-cone>
+      <a-cone position="0 0.44 0" radius-bottom="0.16" radius-top="0.02" height="0.22" color="${crown[1]}" shader="flat"></a-cone>
+      <a-cone position="0 0.57 0" radius-bottom="0.11" radius-top="0.0" height="0.2" color="${crown[3]}" shader="flat"></a-cone>`:`
+      <a-sphere position="0 0.42 0" radius="0.17" color="${crown[0]}" shader="flat"></a-sphere>
+      <a-sphere position="-0.12 0.36 0.05" radius="0.12" color="${crown[1]}" shader="flat"></a-sphere>
+      <a-sphere position="0.12 0.37 -0.04" radius="0.12" color="${crown[2]}" shader="flat"></a-sphere>
+      <a-sphere position="0 0.56 0" radius="0.11" color="${crown[3]}" shader="flat"></a-sphere>`}
       <a-ring position="0 0.005 0" rotation="-90 0 0" radius-inner="0.22" radius-outer="0.25" color="#37e08a" material="shader:flat;opacity:0.7;transparent:true" animation="property: scale; from: 0.8 0.8 0.8; to: 1.15 1.15 1.15; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine"></a-ring>
     </a-entity>
     <!-- 연결선 -->
     <a-entity line="start: -0.62 0.62 0.02; end: -0.62 0.95 0.02; color:#37e08a"></a-entity>
     <a-entity line="start: -0.62 0.95 0.02; end: -0.25 0.95 0.02; color:#37e08a"></a-entity>
     <!-- 정보 패널 -->
-    <a-plane id="panel" info-panel="tab:0" position="0.42 0.62 0.02" width="1.3" height="0.914" rotation="0 -12 0" material="transparent:true"
+    <a-plane class="panel" info-panel="tab:0; tree:${i}" position="0.42 0.62 0.02" width="1.3" height="0.914" rotation="0 -12 0" material="transparent:true"
       animation__in="property: scale; from: 0.6 0.6 0.6; to: 1 1 1; dur: 500; easing: easeOutBack; startEvents: show">
     </a-plane>
     <!-- 바닥 그리드 -->
     <a-plane position="0 0 0" rotation="-90 0 0" width="1.6" height="1.6" material="shader:flat;color:#37e08a;opacity:0.10;transparent:true;wireframe:true;segmentsWidth:1;segmentsHeight:1"></a-plane>
-  </a-entity>`;
+  </a-entity>`; };
 
 document.addEventListener('DOMContentLoaded',()=>{
   const scene=document.createElement('a-scene');
@@ -248,27 +281,29 @@ document.addEventListener('DOMContentLoaded',()=>{
     scene.setAttribute('background','color:#141716');
     scene.setAttribute('vr-mode-ui','enabled:false');
     scene.innerHTML=`<a-entity camera position="0 0.5 2.6" look-controls="enabled:false"></a-entity>
-      <a-entity rotation="-20 0 0" position="-0.15 -0.2 0" scale="0.9 0.9 0.9">${content}</a-entity>`;
+      <a-entity rotation="-20 0 0" position="-0.15 -0.2 0" scale="0.9 0.9 0.9">${content(PREVIEW_TREE)}</a-entity>`;
   }else{
     scene.setAttribute('mindar-image',`imageTargetSrc: ${MARKER}; autoStart: false; uiLoading: no; uiScanning: no; uiError: no; filterMinCF: 0.0001; filterBeta: 0.01; maxTrack: 1`);
     scene.setAttribute('color-space','sRGB');
-    scene.setAttribute('renderer','colorManagement: true; physicallyCorrectLights: true');
+    scene.setAttribute('renderer','colorManagement: true; physicallyCorrectLights: true; alpha: true');
     scene.setAttribute('vr-mode-ui','enabled:false');
     scene.setAttribute('device-orientation-permission-ui','enabled:false');
     scene.innerHTML=`<a-camera position="0 0 0" look-controls="enabled:false"></a-camera>
-      <a-entity id="target" mindar-image-target="targetIndex: 0"><a-entity scale="0.85 0.85 0.85">${content}</a-entity></a-entity>`;
+      ${TREES.map((t,i)=>`<a-entity class="target" data-tree="${i}" mindar-image-target="targetIndex: ${i}"><a-entity scale="0.85 0.85 0.85">${content(i)}</a-entity></a-entity>`).join("")}`;
   }
   document.body.appendChild(scene);
 
   const load=document.getElementById('loading'), hint=document.getElementById('hint'), tabs=document.getElementById('tabs');
-  const setTab=n=>{document.getElementById('panel').setAttribute('info-panel','tab',n); tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.tab==n));};
+  let active=PREVIEW?PREVIEW_TREE:0, curTab=0;
+  const panelOf=i=>PREVIEW?scene.querySelector('.panel'):scene.querySelectorAll('.panel')[i];
+  const setTab=n=>{curTab=n; const pn=panelOf(active); if(pn) pn.setAttribute('info-panel','tab',n); tabs.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.tab==n));};
   tabs.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setTab(+b.dataset.tab)));
 
   const landing=document.getElementById('landing'), finder=document.getElementById('finder'), cta=document.getElementById('cta'), consent=document.getElementById('consent'), back=document.getElementById('back');
 
   if(PREVIEW){
     landing.style.display='none';
-    scene.addEventListener('loaded',()=>{hint.textContent='데스크톱 프리뷰 모드 (카메라 미사용)'; tabs.style.display='flex';});
+    scene.addEventListener('loaded',()=>{hint.textContent='데스크톱 프리뷰 · '+TREES[PREVIEW_TREE].name+' (?tree=0/1)'; tabs.style.display='flex';});
     return;
   }
 
@@ -299,9 +334,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   scene.addEventListener('arReady',()=>{load.style.display='none'; finder.style.display='block'; back.style.display='flex'; hint.textContent='수목 태그를 사각형 안에 맞춰주세요';});
   scene.addEventListener('arError',()=>{document.getElementById('loadmsg').textContent='카메라를 열 수 없습니다. HTTPS 접속 및 카메라 권한을 확인해주세요.';});
 
-  const target=scene.querySelector('#target');
-  target.addEventListener('targetFound',()=>{finder.style.display='none'; hint.textContent='수목 정보를 불러왔습니다 · 탭을 눌러 전환'; tabs.style.display='flex'; document.getElementById('panel').emit('show');});
-  target.addEventListener('targetLost',()=>{finder.style.display='block'; hint.textContent='태그를 다시 비춰주세요 · 패널은 유지됩니다';});
+  scene.querySelectorAll('.target').forEach(target=>{
+    const i=+target.dataset.tree;
+    target.addEventListener('targetFound',()=>{active=i; finder.style.display='none'; hint.textContent=TREES[i].name+' 정보를 불러왔습니다 · 탭을 눌러 전환'; tabs.style.display='flex'; setTab(curTab); panelOf(i).emit('show');});
+    target.addEventListener('targetLost',()=>{finder.style.display='block'; hint.textContent='태그를 다시 비춰주세요 · 다른 수목 태그도 인식됩니다';});
+  });
 
   back.addEventListener('click',()=>{ try{scene.systems['mindar-image-system'].stop();}catch(e){} location.reload(); });
 });
