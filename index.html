@@ -7,34 +7,34 @@
 <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
 <style>
-  html,body{margin:0;height:100%;overflow:hidden;background:#0b1a12;font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;}
+  html,body{margin:0;height:100%;overflow:hidden;background:#060807;font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;}
   #ui{position:fixed;inset:0;pointer-events:none;z-index:10;display:flex;flex-direction:column;justify-content:space-between;}
   .top{padding:calc(env(safe-area-inset-top) + 14px) 16px 0;display:flex;align-items:center;gap:10px;}
-  .brand{background:rgba(9,20,14,.72);backdrop-filter:blur(8px);color:#fff;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:700;letter-spacing:.02em;display:flex;align-items:center;gap:8px;}
-  .brand i{width:8px;height:8px;border-radius:50%;background:#37e08a;box-shadow:0 0 10px #37e08a;display:inline-block;}
-  .brand span{font-weight:400;opacity:.8}
+  .brand{background:rgba(8,10,9,.78);backdrop-filter:blur(8px);color:#fff;border-radius:999px;padding:8px 14px 8px 12px;font-size:12px;display:flex;align-items:center;gap:10px;}
+  .brand img{height:16px;display:block}
+  .brand span{opacity:.75;border-left:1px solid rgba(255,255,255,.2);padding-left:10px;line-height:1}
+  .brand i{width:7px;height:7px;border-radius:50%;background:#37e08a;box-shadow:0 0 8px #37e08a;display:inline-block;}
   .bottom{padding:0 16px calc(env(safe-area-inset-bottom) + 18px);display:flex;flex-direction:column;gap:10px;align-items:center;}
-  #hint{color:#fff;font-size:13px;background:rgba(9,20,14,.72);backdrop-filter:blur(8px);padding:10px 16px;border-radius:12px;text-align:center;line-height:1.5}
+  #hint{color:#fff;font-size:13px;background:rgba(8,10,9,.78);backdrop-filter:blur(8px);padding:10px 16px;border-radius:12px;text-align:center;line-height:1.5}
   #tabs{display:none;gap:8px;pointer-events:auto;}
-  #tabs button{border:1px solid rgba(255,255,255,.25);background:rgba(9,20,14,.72);backdrop-filter:blur(8px);color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;}
-  #tabs button.on{background:#37e08a;color:#062;border-color:#37e08a}
-  #loading{position:fixed;inset:0;z-index:20;background:#0b1a12;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-size:14px}
-  #loading .logo{font-size:28px;font-weight:800;letter-spacing:.08em}
-  #loading .logo b{color:#37e08a}
+  #tabs button{border:1px solid rgba(255,255,255,.25);background:rgba(8,10,9,.78);backdrop-filter:blur(8px);color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;}
+  #tabs button.on{background:#37e08a;color:#04120a;border-color:#37e08a}
+  #loading{position:fixed;inset:0;z-index:20;background:#060807;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-size:14px}
+  #loading .logo img{height:34px}
   .spin{width:28px;height:28px;border:3px solid rgba(255,255,255,.2);border-top-color:#37e08a;border-radius:50%;animation:r 1s linear infinite}
   @keyframes r{to{transform:rotate(360deg)}}
   .mindar-ui-overlay,.a-enter-vr,.a-enter-ar{display:none!important}
   /* 랜딩 */
-  #landing{position:fixed;inset:0;z-index:30;background:radial-gradient(120% 80% at 50% 0%,#17382a 0%,#0b1a12 60%);color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 28px) 28px calc(env(safe-area-inset-bottom) + 28px);}
-  #landing .logo{font-size:22px;font-weight:800;letter-spacing:.1em}
-  #landing .logo b{color:#37e08a}
+  #landing{position:fixed;inset:0;z-index:30;background:radial-gradient(90% 55% at 85% 0%,rgba(55,224,138,.16) 0%,rgba(55,224,138,0) 60%),#060807;color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 28px) 28px calc(env(safe-area-inset-bottom) + 28px);}
+  #landing .logo img{height:30px;display:block}
+  #landing .hero .mark{width:64px;height:64px;margin-bottom:22px;opacity:.9}
   #landing .hero h1{font-size:34px;line-height:1.25;margin:0 0 14px;font-weight:800;letter-spacing:-.01em}
   #landing .hero h1 span{color:#37e08a}
   #landing .hero p{margin:0;color:rgba(255,255,255,.7);font-size:15px;line-height:1.65}
   .steps{display:flex;gap:10px;margin-top:28px}
-  .steps div{flex:1;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 12px 14px;font-size:12px;line-height:1.5;color:rgba(255,255,255,.8)}
+  .steps div{flex:1;background:#101312;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 12px 14px;font-size:12px;line-height:1.5;color:rgba(255,255,255,.8)}
   .steps b{display:block;color:#37e08a;font-size:18px;margin-bottom:4px}
-  #cta{width:100%;border:0;border-radius:16px;padding:18px;font-size:17px;font-weight:800;background:#37e08a;color:#062;box-shadow:0 8px 30px rgba(55,224,138,.35);display:flex;align-items:center;justify-content:center;gap:10px}
+  #cta{width:100%;border:0;border-radius:16px;padding:18px;font-size:17px;font-weight:800;background:#37e08a;color:#04120a;box-shadow:0 8px 30px rgba(55,224,138,.35);display:flex;align-items:center;justify-content:center;gap:10px}
   #cta:active{transform:scale(.98)}
   #cta:disabled{opacity:.6}
   #consent{font-size:12px;color:rgba(255,255,255,.5);text-align:center;margin-top:12px;line-height:1.5}
@@ -48,16 +48,17 @@
   #finder i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
   #finder .line{position:absolute;left:8%;right:8%;height:2px;background:linear-gradient(90deg,transparent,#37e08a,transparent);animation:scan 2.2s ease-in-out infinite}
   @keyframes scan{0%{top:6%}50%{top:94%}100%{top:6%}}
-  #back{pointer-events:auto;background:rgba(9,20,14,.72);backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:999px;width:36px;height:36px;font-size:18px;display:none;align-items:center;justify-content:center;margin-left:auto}
+  #back{pointer-events:auto;background:rgba(8,10,9,.78);backdrop-filter:blur(8px);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:999px;width:36px;height:36px;font-size:18px;display:none;align-items:center;justify-content:center;margin-left:auto}
 </style>
 </head>
 <body>
 
-<div id="loading" style="display:none"><div class="logo">VOID<b>BOX</b></div><div class="spin"></div><div id="loadmsg">AR 엔진 로딩 중…</div></div>
+<div id="loading" style="display:none"><div class="logo"><img src="./assets/full_logo.svg" alt="VOIDBOX"></div><div class="spin"></div><div id="loadmsg">AR 엔진 로딩 중…</div></div>
 
 <div id="landing">
-  <div class="logo">VOID<b>BOX</b> AR</div>
+  <div class="logo"><img src="./assets/full_logo.svg" alt="VOIDBOX"></div>
   <div class="hero">
+    <svg class="mark" viewBox="0 0 45 45" fill="none"><path d="M0 15.17 14.67.5H44v29.33L29.33 44.5H0V15.17Z" fill="#37e08a"/><rect y="15.17" width="29.33" height="29.33" fill="url(#g)"/><rect x="14.67" y="15.17" width="14.67" height="14.67" fill="#060807"/><defs><linearGradient id="g" x1="29.33" y1="15.17" x2="0" y2="44.5" gradientUnits="userSpaceOnUse"><stop stop-color="#060807"/><stop offset="1" stop-color="#37e08a"/></linearGradient></defs></svg>
     <h1>수목 정보를<br><span>AR</span>로 확인하세요</h1>
     <p>단지 내 조경수목에 부착된 태그를 스캔하면 수종·생육 데이터·관리 이력을 현장에서 바로 볼 수 있습니다.</p>
     <div class="steps">
@@ -75,7 +76,7 @@
 <div id="finder"><i></i><i></i><i></i><i></i><div class="line"></div></div>
 
 <div id="ui">
-  <div class="top"><div class="brand"><i></i>VOIDBOX AR <span>· 조경수목 정보 서비스</span></div><button id="back" title="처음으로">×</button></div>
+  <div class="top"><div class="brand"><img src="./assets/full_logo.svg" alt="VOIDBOX"><span>조경수목 AR</span><i></i></div><button id="back" title="처음으로">×</button></div>
   <div class="bottom">
     <div id="hint">명함(마커)을 카메라에 비춰주세요</div>
     <div id="tabs">
@@ -101,15 +102,18 @@ const TREE = {
     ['2023.11','토양 개량','유기질 비료 시비','ok'],
   ]
 };
-const G = {bg:'#0e1f17', card:'#12281e', line:'rgba(255,255,255,.10)', txt:'#ffffff', sub:'rgba(255,255,255,.62)', acc:'#37e08a', acc2:'#7ad7ff', warn:'#ffb84d'};
+const G = {bg:'#0b0d0c', card:'#151817', line:'rgba(255,255,255,.09)', txt:'#ffffff', sub:'rgba(255,255,255,.62)', acc:'#37e08a', acc2:'#7ad7ff', warn:'#ffb84d'};
 
 /* ========= 캔버스 패널 그리기 ========= */
+const LOGO=new Image(); LOGO.src='./assets/full_logo.svg';
 const W=1024, H=720;
 function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 function frame(ctx,title,tag){
   ctx.clearRect(0,0,W,H);
   rr(ctx,0,0,W,H,36); ctx.fillStyle=G.bg; ctx.fill();
   ctx.strokeStyle='rgba(55,224,138,.55)'; ctx.lineWidth=4; ctx.stroke();
+  // logo watermark
+  if(LOGO.complete&&LOGO.naturalWidth){ctx.globalAlpha=.55; ctx.drawImage(LOGO,W-40-140,H-30-31,140,31); ctx.globalAlpha=1;}
   // header
   ctx.fillStyle=G.acc; rr(ctx,40,36,10,64,5); ctx.fill();
   ctx.fillStyle=G.txt; ctx.font='800 56px sans-serif'; ctx.textBaseline='top'; ctx.fillText(TREE.name,70,34);
@@ -189,7 +193,7 @@ function panelHistory(ctx){
     ctx.fillStyle=G.sub; ctx.font='22px sans-serif'; ctx.fillText(h[2],x+420,y+12);
     ctx.fillStyle=G.acc; ctx.font='700 20px sans-serif'; ctx.textAlign='right'; ctx.fillText('완료 ✓',x+890,y+14); ctx.textAlign='left';
   });
-  ctx.fillStyle=G.sub; ctx.font='22px sans-serif'; ctx.fillText('다음 예정 · 2026.03 정기 전정  ·  담당 : 양천구 공원녹지과 / 관리사무소',70,672);
+  ctx.fillStyle=G.sub; ctx.font='22px sans-serif'; ctx.fillText('다음 예정 · 2026.03 정기 전정  ·  담당 : 양천구 공원녹지과',70,672);
 }
 const PANELS=[panelInfo,panelGrowth,panelHistory];
 
@@ -202,6 +206,7 @@ AFRAME.registerComponent('info-panel',{
     this.tex=new THREE.CanvasTexture(this.canvas); this.tex.colorSpace=THREE.SRGBColorSpace; this.tex.anisotropy=8;
     const apply=()=>{const m=this.el.getObject3D('mesh'); if(!m)return; m.material=new THREE.MeshBasicMaterial({map:this.tex,transparent:true}); this.redraw();};
     this.el.addEventListener('object3dset',apply); apply();
+    if(!LOGO.complete) LOGO.addEventListener('load',()=>this.redraw(),{once:true});
   },
   update(){this.redraw();},
   redraw(){ if(!this.ctx)return; PANELS[this.data.tab](this.ctx); this.tex.needsUpdate=true; }
@@ -236,7 +241,7 @@ const content=`
 document.addEventListener('DOMContentLoaded',()=>{
   const scene=document.createElement('a-scene');
   if(PREVIEW){
-    scene.setAttribute('background','color:#1c2b24');
+    scene.setAttribute('background','color:#141716');
     scene.setAttribute('vr-mode-ui','enabled:false');
     scene.innerHTML=`<a-entity camera position="0 0.5 2.6" look-controls="enabled:false"></a-entity>
       <a-entity rotation="-20 0 0" position="-0.15 -0.2 0" scale="0.9 0.9 0.9">${content}</a-entity>`;
